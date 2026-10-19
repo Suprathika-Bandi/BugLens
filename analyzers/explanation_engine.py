@@ -2,85 +2,183 @@ EXPLANATIONS = {
     "unused_variables": {
         "title": "Unused Variable",
         "description": "A variable is assigned a value but is never used later in the code.",
-        "suggestion": "Remove the variable if it is unnecessary, or use it where required."
+        "suggestion": "Remove the variable if it is unnecessary, or use it where required.",
+        "severity": "MEDIUM",
+        "category": "Code Quality",
     },
-
     "unused_imports": {
         "title": "Unused Import",
         "description": "An imported module or name is not used in the code.",
-        "suggestion": "Remove the import if it is not required."
+        "suggestion": "Remove the import if it is not required.",
+        "severity": "LOW",
+        "category": "Code Quality",
     },
-
     "mutable_defaults": {
         "title": "Mutable Default Argument",
-        "description": "A function uses a mutable object such as a list, dictionary, or set as a default argument.",
-        "suggestion": "Use None as the default value and create the mutable object inside the function."
+        "description": "A function uses a mutable object such as a list, dictionary, or set as a default argument, which retains modifications across function calls.",
+        "suggestion": "Use None as the default value and instantiate the mutable object inside the function body.",
+        "severity": "HIGH",
+        "category": "Bug Risk",
     },
-
     "bare_except": {
         "title": "Bare Except",
-        "description": "The code catches all exceptions without specifying an exception type.",
-        "suggestion": "Catch a specific exception type such as ValueError or TypeError."
+        "description": "The code catches all exceptions blindly without specifying an exception type, masking critical system signals like KeyboardInterrupt.",
+        "suggestion": "Catch a specific exception type such as ValueError or TypeError instead of a bare except.",
+        "severity": "HIGH",
+        "category": "Exception Handling",
     },
-
+    "broad_except": {
+        "title": "Broad Exception Handler",
+        "description": "Catching generic Exception or BaseException without handling or logging can swallow unexpected bugs silently.",
+        "suggestion": "Catch the most specific exception class possible and ensure errors are properly logged or re-raised.",
+        "severity": "MEDIUM",
+        "category": "Exception Handling",
+    },
     "undefined_variables": {
         "title": "Undefined Variable",
-        "description": "A variable is used before it has been defined.",
-        "suggestion": "Define the variable before using it and check for spelling mistakes."
+        "description": "A variable is used before it has been defined or assigned in the accessible scope.",
+        "suggestion": "Define the variable before using it and check for spelling mistakes or scope issues.",
+        "severity": "CRITICAL",
+        "category": "Name Resolution",
     },
-
     "dangerous_eval": {
         "title": "Dangerous eval() Usage",
-        "description": "eval() executes dynamically generated Python code and can introduce security risks.",
-        "suggestion": "Avoid eval() when possible and use safer alternatives such as ast.literal_eval() for data parsing."
+        "description": "eval() executes dynamically generated Python code and can introduce severe arbitrary code execution security risks.",
+        "suggestion": "Avoid eval() and use safer alternatives such as ast.literal_eval() for parsing data structures.",
+        "severity": "CRITICAL",
+        "category": "Security",
     },
-
+    "dangerous_exec": {
+        "title": "Dangerous exec() Usage",
+        "description": "exec() dynamically executes arbitrary Python code statements, creating critical security vulnerabilities.",
+        "suggestion": "Refactor to use standard Python functions, dictionaries, or dynamic dispatch instead of exec().",
+        "severity": "CRITICAL",
+        "category": "Security",
+    },
     "division_by_zero": {
         "title": "Division by Zero",
-        "description": "The code attempts to divide, floor-divide, or take modulo by zero.",
-        "suggestion": "Check that the divisor is not zero before performing the operation."
+        "description": "The code attempts to divide, floor-divide, or take modulo by literal zero.",
+        "suggestion": "Check that the divisor is not zero before performing the division operation.",
+        "severity": "HIGH",
+        "category": "Arithmetic",
     },
-        "zero_division_error": {
+    "zero_division_error": {
         "title": "Zero Division Error",
         "description": "The program attempted to divide a number by zero during execution.",
-        "suggestion": "Check that the divisor is not zero before performing the division."
+        "suggestion": "Check that the divisor is not zero before performing the division.",
+        "severity": "HIGH",
+        "category": "Runtime Error",
     },
-
     "name_error": {
         "title": "Undefined Variable at Runtime",
         "description": "The program attempted to use a variable or name that Python could not find during execution.",
-        "suggestion": "Make sure the variable is defined before use and check for spelling mistakes."
+        "suggestion": "Make sure the variable is defined before use and check for spelling mistakes.",
+        "severity": "CRITICAL",
+        "category": "Runtime Error",
     },
     "type_error": {
         "title": "Type Error at Runtime",
         "description": "The program performed an operation using incompatible data types during execution.",
-        "suggestion": "Check the data types involved and convert them to compatible types before performing the operation."
+        "suggestion": "Check the data types involved and convert them to compatible types before performing the operation.",
+        "severity": "HIGH",
+        "category": "Runtime Error",
     },
-
+    "index_error": {
+        "title": "Index Out of Range",
+        "description": "The program attempted to access a sequence index that is outside the valid range.",
+        "suggestion": "Verify list/sequence bounds using len() before accessing elements by index.",
+        "severity": "HIGH",
+        "category": "Runtime Error",
+    },
+    "key_error": {
+        "title": "Dictionary Key Error",
+        "description": "The program attempted to access a key that does not exist in the dictionary.",
+        "suggestion": "Use dict.get(key, default) or verify that the key exists using 'if key in my_dict:' before accessing it.",
+        "severity": "HIGH",
+        "category": "Runtime Error",
+    },
+    "attribute_error": {
+        "title": "Attribute Error at Runtime",
+        "description": "The program attempted to reference an attribute or method that does not exist on the target object.",
+        "suggestion": "Verify the object type and inspect its available attributes using hasattr() or dir().",
+        "severity": "HIGH",
+        "category": "Runtime Error",
+    },
+    "value_error": {
+        "title": "Value Error at Runtime",
+        "description": "A function received an argument of the correct type but an inappropriate value.",
+        "suggestion": "Validate input values before passing them into the function or operation.",
+        "severity": "MEDIUM",
+        "category": "Runtime Error",
+    },
     "unreachable_code": {
         "title": "Unreachable Code",
-        "description": "This code appears after a return, raise, break, or continue statement and may never execute.",
-        "suggestion": "Remove the unreachable statements or move them before the control-flow statement."
+        "description": "This code appears after a return, raise, break, or continue statement and will never execute.",
+        "suggestion": "Remove the unreachable statements or move them before the control-flow statement.",
+        "severity": "LOW",
+        "category": "Dead Code",
     },
     "none_comparison": {
-    "title": "None Comparison",
-    "description": "The code compares a value with None using == or != instead of the identity operators is or is not.",
-    "suggestion": "Use 'is None' or 'is not None' when checking whether a value is None."
+        "title": "None Comparison",
+        "description": "The code compares a value with None using == or != instead of the identity operators is or is not.",
+        "suggestion": "Use 'is None' or 'is not None' when checking whether a value is None.",
+        "severity": "LOW",
+        "category": "Best Practice",
     },
     "debug_prints": {
         "title": "Debug Print Statement",
-        "description": "A print() statement was detected and may have been left in the code for debugging purposes.",
-        "suggestion": "Remove unnecessary print() statements or replace them with proper logging before deploying the application."
+        "description": "A print() statement was detected and may have been left in the code for temporary debugging.",
+        "suggestion": "Remove unnecessary print() statements or replace them with proper logging before production deployment.",
+        "severity": "INFO",
+        "category": "Code Hygiene",
+    },
+    "suspicious_conditions": {
+        "title": "Suspicious Condition",
+        "description": "A conditional expression uses a constant condition or compares an expression to itself, which always evaluates to the same boolean result.",
+        "suggestion": "Review the conditional logic to ensure it checks a meaningful dynamic expression.",
+        "severity": "MEDIUM",
+        "category": "Logic Flaw",
+    },
+    "shadowed_builtins": {
+        "title": "Shadowed Python Builtin",
+        "description": "A variable or parameter name shadows a built-in Python type or function (such as list, dict, str, type, id).",
+        "suggestion": "Rename the variable to avoid overriding built-in identifiers and causing subtle bugs.",
+        "severity": "MEDIUM",
+        "category": "Naming",
+    },
+    "syntax_error": {
+        "title": "Syntax Error",
+        "description": "The Python interpreter encountered invalid code syntax that prevents the program from being parsed.",
+        "suggestion": "Correct the syntax error indicated at the reported line and column position.",
+        "severity": "CRITICAL",
+        "category": "Syntax",
+    },
+    "timeout_error": {
+        "title": "Execution Timeout",
+        "description": "The code execution exceeded the allowed execution time limit, likely due to an infinite loop or excessive computation.",
+        "suggestion": "Ensure all loops have reachable exit conditions and terminate as intended.",
+        "severity": "HIGH",
+        "category": "Performance",
+    },
+    "runtime_error": {
+        "title": "Runtime Execution Error",
+        "description": "An unexpected exception was raised while executing the Python code.",
+        "suggestion": "Inspect the traceback details and fix the root cause that triggered the runtime failure.",
+        "severity": "HIGH",
+        "category": "Runtime Error",
     },
 }
 
 
 def get_explanation(issue_type):
+    """Retrieve explanation, title, description, suggestion, and severity for an issue type."""
     return EXPLANATIONS.get(
         issue_type,
         {
             "title": "Unknown Issue",
             "description": "No explanation is available for this issue.",
-            "suggestion": "Review the reported code and check its behavior."
-        }
+            "suggestion": "Review the reported code and check its behavior.",
+            "severity": "MEDIUM",
+            "category": "General",
+        },
     )

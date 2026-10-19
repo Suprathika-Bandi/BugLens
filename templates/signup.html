@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Create Account | BugLens</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='auth.css') }}">
+</head>
+
+<body>
+
+    <header class="auth-header">
+        <a href="/" class="brand">
+            <span class="brand-icon">🐞</span>
+            <span>BugLens</span>
+        </a>
+
+        <a href="/" class="back-home">← Back to Home</a>
+    </header>
+
+    <main class="auth-container">
+
+        <section class="auth-intro">
+            <span class="eyebrow">JOIN BUGLENS</span>
+
+            <h1>
+                Write better code.<br>
+                <span>Starting today.</span>
+            </h1>
+
+            <p>
+                Create your BugLens account and discover a smarter
+                way to detect Python bugs, understand errors,
+                and improve your code with AI-powered analysis.
+            </p>
+
+            <div class="benefit-list">
+                <div>✓ Catch Python errors earlier</div>
+                <div>✓ Get clear AI-powered explanations</div>
+                <div>✓ Learn from suggested code fixes</div>
+            </div>
+        </section>
+
+        <section class="auth-card">
+
+            <div class="card-heading">
+                <h2>Create your account</h2>
+                <p>Enter your details to get started.</p>
+            </div>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="form-message {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form action="/signup" method="POST">
+
+                <div class="form-group">
+                    <label for="name">Full name</label>
+
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        placeholder="Enter your full name"
+                        autocomplete="name"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email address</label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="you@example.com"
+                        autocomplete="email"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Create a password"
+                        autocomplete="new-password"
+                        minlength="8"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password">Confirm password</label>
+
+                    <input
+                        type="password"
+                        id="confirm_password"
+                        name="confirm_password"
+                        placeholder="Re-enter your password"
+                        autocomplete="new-password"
+                        minlength="8"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="auth-button">
+                    Create Account <span>→</span>
+                </button>
+
+            </form>
+
+            <p class="auth-switch">
+                Already have an account?
+                <a href="/login">Sign in</a>
+            </p>
+
+            <div class="secure-note">
+                <span>🔒</span>
+                Your account information stays protected.
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="auth-footer">
+        © 2026 BugLens · Find Bugs. Fix Faster.
+    </footer>
+
+</body>
+</html>

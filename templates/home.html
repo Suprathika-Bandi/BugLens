@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>BugLens — Find Bugs. Fix Faster.</title>
+
+    <meta name="description"
+          content="Analyze Python code, detect bugs, understand errors with AI, and discover corrected code with BugLens.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='home.css') }}">
+</head>
+
+<body>
+
+    <!-- ================= HEADER ================= -->
+
+    <header class="navbar">
+        <div class="nav-container">
+
+            <a href="/" class="brand">
+                <span class="brand-icon">🐞</span>
+                <span>Bug<span class="brand-gradient">Lens</span></span>
+            </a>
+
+            <nav class="nav-links">
+                <a href="#home" class="nav-link active">Home</a>
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#why-buglens" class="nav-link">Why BugLens</a>
+                <a href="#about" class="nav-link">About</a>
+            </nav>
+
+            <div class="nav-actions">
+    {% if session.get('user_id') %}
+        <span class="welcome-user">
+            Welcome, {{ session.get('user_name') }}!
+        </span>
+        <a href="/analyzer" class="btn btn-primary btn-small">
+            Open Analyzer
+        </a>
+        <a href="/logout" class="btn btn-login">Logout</a>
+    {% else %}
+        <a href="/login" class="btn btn-login">Login</a>
+        <a href="/signup" class="btn btn-primary btn-small">Sign Up</a>
+    {% endif %}
+</div>
+
+        </div>
+    </header>
+
+
+    <!-- ================= HERO SECTION ================= -->
+
+    <main>
+
+        <section class="hero" id="home">
+
+            <div class="hero-container">
+
+                <!-- LEFT: INTRODUCTION -->
+
+                <div class="hero-content">
+
+                    <div class="hero-badge">
+                        <span class="sparkle">✦</span>
+                        AI-Powered Python Code Analysis
+                    </div>
+
+                    <h1>
+                        Find Bugs.<br>
+                        <span class="gradient-text">Fix Faster.</span>
+                    </h1>
+
+                    <p class="hero-description">
+                        BugLens analyzes your Python code, detects issues,
+                        explains them with AI, and gives you corrected code
+                        — all in one place.
+                    </p>
+
+                    <div class="hero-buttons">
+                        <a href="/analyzer" class="btn btn-primary btn-large">
+                            Get Started
+                            <span class="arrow">→</span>
+                        </a>
+
+                        <a href="/login" class="btn btn-secondary btn-large">
+                            <span class="login-icon">⇥</span>
+                            Login
+                        </a>
+                    </div>
+
+
+                    <!-- FOUR FEATURES -->
+
+                    <div class="feature-highlights" id="features">
+
+                        <div class="feature-item">
+                            <div class="feature-icon icon-purple">
+                                <span>⌕</span>
+                            </div>
+
+                            <h3>Detect Bugs</h3>
+
+                            <p>
+                                Find syntax, runtime,
+                                logic and static issues.
+                            </p>
+                        </div>
+
+                        <div class="feature-item">
+                            <div class="feature-icon icon-blue">
+                                <span>✧</span>
+                            </div>
+
+                            <h3>AI Explanation</h3>
+
+                            <p>
+                                Understand why
+                                your code fails.
+                            </p>
+                        </div>
+
+                        <div class="feature-item">
+                            <div class="feature-icon icon-green">
+                                <span>&lt;/&gt;</span>
+                            </div>
+
+                            <h3>Corrected Code</h3>
+
+                            <p>
+                                Get clean, working
+                                Python code.
+                            </p>
+                        </div>
+
+                        <div class="feature-item">
+                            <div class="feature-icon icon-orange">
+                                <span>⬡</span>
+                            </div>
+
+                            <h3>Multiple Analyses</h3>
+
+                            <p>
+                                Static, AST, runtime
+                                and more.
+                            </p>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- RIGHT: ANALYZER ILLUSTRATION -->
+
+                <div class="hero-visual">
+
+                    <div class="blob blob-one"></div>
+                    <div class="blob blob-two"></div>
+
+                    <div class="python-symbol">🐍</div>
+
+                    <div class="analyzer-window">
+
+                        <div class="window-topbar">
+                            <div class="window-dots">
+                                <span class="dot dot-red"></span>
+                                <span class="dot dot-yellow"></span>
+                                <span class="dot dot-green"></span>
+                            </div>
+                        </div>
+
+                        <div class="analyzer-body">
+
+                            <div class="code-panel">
+
+                                <h3>Python Code Analyzer</h3>
+
+                                <div class="code-editor">
+
+                                    <div class="code-line">
+                                        <span class="line-number">1</span>
+                                        <code>numbers = [10, 20, 30]</code>
+                                    </div>
+
+                                    <div class="code-line error-line">
+                                        <span class="line-number">2</span>
+                                        <code>print(numbers[5])</code>
+                                    </div>
+
+                                    <div class="code-line">
+                                        <span class="line-number">3</span>
+                                        <code></code>
+                                    </div>
+
+                                    <div class="error-badge">
+                                        <span>!</span>
+                                        IndexError
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="analysis-panels">
+
+                                <!-- AI EXPLANATION -->
+
+                                <div class="info-card">
+
+                                    <h4>
+                                        <span class="mini-icon ai-icon">✦</span>
+                                        AI Explanation
+                                    </h4>
+
+                                    <p>
+                                        The code tries to access the
+                                        6th element of a list, but the
+                                        list only has 3 elements. This
+                                        causes an IndexError.
+                                    </p>
+
+                                </div>
+
+
+                                <!-- CORRECTED CODE -->
+
+                                <div class="info-card corrected-card">
+
+                                    <h4>
+                                        <span class="mini-icon success-icon">✓</span>
+                                        Corrected Code
+                                    </h4>
+
+                                    <div class="corrected-code">
+                                        <code>
+                                            numbers = [10, 20, 30]<br>
+                                            print(numbers[2])
+                                        </code>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="floating-note">
+                        <span class="note-arrow">↗</span>
+                        <span>Better Code<br>Starts Here</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= TRUST SECTION ================= -->
+
+        <section class="trust-section" id="why-buglens">
+
+            <div class="section-heading">
+                <h2>Trusted by Python Learners &amp; Developers</h2>
+
+                <p>
+                    Build better. Code smarter. With BugLens.
+                </p>
+            </div>
+
+            <div class="trust-container">
+
+                <div class="trust-item">
+                    <div class="trust-icon trust-purple">
+                        &lt;/&gt;
+                    </div>
+
+                    <div>
+                        <h3>100%</h3>
+                        <p>Python Focused</p>
+                    </div>
+                </div>
+
+
+                <div class="trust-item">
+                    <div class="trust-icon trust-blue">
+                        ϟ
+                    </div>
+
+                    <div>
+                        <h3>Multiple</h3>
+                        <p>Analysis Layers</p>
+                    </div>
+                </div>
+
+
+                <div class="trust-item">
+                    <div class="trust-icon trust-green">
+                        ✓
+                    </div>
+
+                    <div>
+                        <h3>AI Powered</h3>
+                        <p>with Local Ollama</p>
+                    </div>
+                </div>
+
+
+                <div class="trust-item">
+                    <div class="trust-icon trust-pink">
+                        ♡
+                    </div>
+
+                    <div>
+                        <h3>Beginner Friendly</h3>
+                        <p>&amp; Easy to Use</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= ABOUT SECTION ================= -->
+
+        <section class="about-section" id="about">
+
+            <div class="about-card">
+
+                <span class="about-badge">ABOUT BUGLENS</span>
+
+                <h2>
+                    Write code with confidence.
+                    <span class="gradient-text">Debug with clarity.</span>
+                </h2>
+
+                <p>
+                    BugLens brings multiple Python analysis techniques
+                    together with AI-powered explanations to help you
+                    find problems, understand errors, and improve your code.
+                </p>
+
+                <a href="/analyzer" class="btn btn-primary btn-large">
+                    Analyze Your Code
+                    <span class="arrow">→</span>
+                </a>
+
+            </div>
+
+        </section>
+
+    </main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="home-messages">
+            {% for category, message in messages %}
+                <div class="form-message {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+
+    <!-- ================= FOOTER ================= -->
+
+    <footer class="footer">
+
+        <a href="/" class="brand footer-brand">
+            <span class="brand-icon">🐞</span>
+            <span>Bug<span class="brand-gradient">Lens</span></span>
+        </a>
+
+        <p>
+            Find Bugs. Fix Faster. &copy; 2026 BugLens.
+        </p>
+
+    </footer>
+
+</body>
+</html>

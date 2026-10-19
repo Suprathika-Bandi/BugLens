@@ -1,7 +1,19 @@
+from unittest.mock import patch
 from analyzers.bug_analyzer import analyze_code
 
 
-def test_complete_analysis():
+MOCK_AI_RESPONSE = {
+    "success": True,
+    "explanation": "Detected code issues and suggested improvements.",
+    "why_it_happens": "Issues stem from mutable defaults and arithmetic zero division.",
+    "suggested_fix": "Refactor defaults and validate divisors.",
+    "corrected_code": "x = 10\nprint(x)",
+    "changes_made": ["Fixed default argument", "Safeguarded division"],
+}
+
+
+@patch("analyzers.bug_analyzer.analyze_with_ai", return_value=MOCK_AI_RESPONSE)
+def test_complete_analysis(mock_ai):
     code = """
 import os
 
@@ -32,6 +44,7 @@ except:
 
     assert result["static"]["unused_variables"]["explanation"]["title"] == "Unused Variable"
     assert result["static"]["division_by_zero"]["explanation"]["title"] == "Division by Zero"
+    assert mock_ai.called
 
 
 def test_invalid_syntax_stops_analysis():
@@ -40,14 +53,15 @@ x = 10
 print(x
 """
 
-    result = analyze_code(code)
+    result = analyze_code(code, enable_ai=False)
 
     assert result["syntax"]["has_error"] is True
     assert result["static"] == {}
     assert result["runtime"] is None
 
 
-def test_none_comparison_in_complete_analysis():
+@patch("analyzers.bug_analyzer.analyze_with_ai", return_value=MOCK_AI_RESPONSE)
+def test_none_comparison_in_complete_analysis(mock_ai):
     code = """
 value = None
 
@@ -61,7 +75,9 @@ if value == None:
     assert len(result["static"]["none_comparison"]["findings"]) == 1
     assert result["static"]["none_comparison"]["explanation"]["title"] == "None Comparison"
 
-def test_runtime_error_explanation():
+
+@patch("analyzers.bug_analyzer.analyze_with_ai", return_value=MOCK_AI_RESPONSE)
+def test_runtime_error_explanation(mock_ai):
     code = """
 x = 10
 y = 0
@@ -80,7 +96,9 @@ print(x / y)
     assert "divide" in result["runtime"]["explanation"]["description"]
     assert "divisor" in result["runtime"]["explanation"]["suggestion"]
 
-def test_type_error_explanation():
+
+@patch("analyzers.bug_analyzer.analyze_with_ai", return_value=MOCK_AI_RESPONSE)
+def test_type_error_explanation(mock_ai):
     code = """
 x = 10
 print(x + "hello")

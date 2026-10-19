@@ -4,473 +4,664 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>BugLens - Python Bug Analyzer</title>
-
+    <meta name="description"
+        content="BugLens — Intelligent Python Bug Detection, AST Inspection, Runtime Analysis, and Local Ollama AI Platform.">
+    <title>BugLens — Intelligent Python Bug Detection Platform</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
 
-    <div class="container">
-
-        <header>
-            <h1>BugLens</h1>
-            <p>Intelligent Python Bug Analysis and Error Detection System</p>
-        </header>
-
-
-        <!-- Code Input -->
-        <div class="code-section">
-
-            <h2>Python Code Analyzer</h2>
-
-            <form method="POST" onsubmit="showLoading(); return true;">
-
-                <label for="code">
-                    Enter your Python code:
-                </label>
-
-                <br><br>
-
-                <div class="editor-container">
-
-                    <div id="line-numbers">1</div>
-
-                    <textarea id="code" name="code" placeholder="Write or paste your Python code here..."
-                        oninput="updateLineNumbers()" onscroll="syncLineNumbers()">{{ code }}</textarea>
-
+    <!-- Navigation Header -->
+    <header class="app-navbar">
+        <div class="nav-container">
+            <a href="/" class="brand-group" aria-label="BugLens Home">
+                <span class="brand-icon">🐞</span>
+                <div class="brand-title">
+                    <span class="bug-text">Bug</span><span class="lens-text">Lens</span>
                 </div>
+            </a>
 
-                <br>
+            <nav class="nav-links" aria-label="Main Navigation">
+                <a href="#analyzer" class="nav-link">Analyzer</a>
+                <a href="#how-it-works" class="nav-link" onclick="openModal('modal-how')">How It Works</a>
+                <a href="#docs" class="nav-link" onclick="openModal('modal-docs')">Docs</a>
+                <a href="#about" class="nav-link" onclick="openModal('modal-about')">About</a>
 
-                <button type="submit" class="analyze-btn">
-                    Analyze Code
-                </button>
-
-                <button type="button" class="clear-btn" onclick="clearCode()">
-                    Clear Code
-                </button>
-
-            </form>
-
+            </nav>
         </div>
+    </header>
 
+    <!-- Hero Section -->
+    <section class="hero-banner">
+        <h1 class="hero-headline">
+            Find Bugs Before <span class="gradient-text">They Find You.</span>
+        </h1>
 
-        {% if result %}
+    </section>
 
-        <!-- Results -->
-        <div class="result-section">
+    <!-- Main Workspace -->
+    <main class="app-workspace" id="analyzer">
+        <div class="workspace-grid">
 
-            <h2>Analysis Results</h2>
-
-
-            <!-- Issue Summary -->
-            <div class="result-card">
-
-                <h3>Issue Summary</h3>
-
-                <div class="summary-grid">
-
-                    <div class="summary-item">
-                        <h4>Static Issues</h4>
-                        <p>{{ result.summary.total_static_issues }}</p>
+            <!-- LEFT COLUMN: Code Editor -->
+            <div class="editor-card">
+                <div class="editor-header">
+                    <div class="editor-title-group">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="16 18 22 12 16 6"></polyline>
+                            <polyline points="8 6 2 12 8 18"></polyline>
+                        </svg>
+                        <span>Python Source Code</span>
                     </div>
 
-
-                    <div class="summary-item">
-                        <h4>Syntax</h4>
-
-                        {% if result.syntax.has_error %}
-
-                        <p class="error">
-                            Error
-                        </p>
-
-                        {% else %}
-
-                        <p class="success">
-                            No Errors
-                        </p>
-
-                        {% endif %}
-
+                    <div class="editor-actions">
+                        <span class="editor-meta" id="line-count">0 lines</span>
+                        <span class="editor-meta" id="char-count">0 chars</span>
                     </div>
-
-
-                    <div class="summary-item">
-                        <h4>Runtime</h4>
-
-                        {% if result.runtime and result.runtime.has_error %}
-
-                        <p class="error">
-                            {{ result.runtime.error_type }}
-                        </p>
-
-                        {% else %}
-
-                        <p class="success">
-                            No Errors
-                        </p>
-
-                        {% endif %}
-
-                    </div>
-
                 </div>
 
-            </div>
-
-
-            <!-- Syntax Analysis -->
-            <div class="result-card">
-
-                <h3>1. Syntax Analysis</h3>
-
-                {% if result.syntax.has_error %}
-
-                <p class="error">
-                    ❌ Syntax Error
-                </p>
-
-                <p>
-                    <strong>Message:</strong>
-                    {{ result.syntax.message }}
-                </p>
-
-                <p>
-                    <strong>Line:</strong>
-                    {{ result.syntax.line }}
-                </p>
-
-                <p>
-                    <strong>Column:</strong>
-                    {{ result.syntax.column }}
-                </p>
-
-                {% else %}
-
-                <p class="success">
-                    ✅ No syntax errors found.
-                </p>
-
-                {% endif %}
-
-            </div>
-
-
-            <!-- AST Analysis -->
-            <div class="result-card">
-
-                <h3>2. AST Analysis</h3>
-
-                {% if result.ast.success %}
-
-                <p class="success">
-                    ✅ AST analysis completed successfully.
-                </p>
-
-                <p>
-                    <strong>AST Nodes:</strong>
-                    {{ result.ast.node_count }}
-                </p>
-
-                <p>
-                    <strong>Functions:</strong>
-                    {{ result.ast.functions | join(', ') if result.ast.functions else 'None detected' }}
-                </p>
-
-                <p>
-                    <strong>Classes:</strong>
-                    {{ result.ast.classes | join(', ') if result.ast.classes else 'None detected' }}
-                </p>
-
-                <p>
-                    <strong>Imports:</strong>
-                    {{ result.ast.imports | join(', ') if result.ast.imports else 'None detected' }}
-                </p>
-
-                <p>
-                    <strong>Variables:</strong>
-                    {{ result.ast.variables | join(', ') if result.ast.variables else 'None detected' }}
-                </p>
-
-                {% else %}
-
-                <p class="error">
-                    ❌ AST analysis failed.
-                </p>
-
-                <p>
-                    {{ result.ast.message }}
-                </p>
-
-                {% endif %}
-
-            </div>
-
-
-            <!-- Static Analysis -->
-            <div class="result-card">
-
-                <h3>3. Static Analysis</h3>
-
-                {% for issue_type, issue in result.static.items() %}
-
-                <div class="issue-section">
-
-                    <h4>
-                        {{ issue.explanation.title }}
-                    </h4>
-
-                    {% if issue.findings %}
-
-                    <div class="issue">
-                        ⚠️ Issue detected
+                <form id="analyze-form" method="POST" action="/" onsubmit="submitAnalysis(); return true;">
+                    <div class="editor-body">
+                        <div id="line-numbers" class="line-numbers" aria-hidden="true"><span>1</span></div>
+                        <textarea id="code" name="code" class="code-textarea"
+                            placeholder="Write or paste your Python code here to begin analysis...&#10;&#10;Try typing code, or select a preset example from 'Load Bug Example' above."
+                            spellcheck="false" required>{{ code }}</textarea>
                     </div>
 
-                    <p>
-                        <strong>Description:</strong>
-                        {{ issue.explanation.description }}
-                    </p>
+                    <div class="editor-footer">
+                        <div class="footer-left">
+                            <label class="ai-toggle-label"
+                                title="Enable AI explanation and code fixes via local Ollama">
+                                <input type="checkbox" id="enable_ai" name="enable_ai" value="true" {% if enable_ai is
+                                    not defined or enable_ai %}checked{% endif %}>
+                                <span>Local Ollama AI ({{ ollama_info.model if ollama_info else 'llama3.2' }})</span>
+                            </label>
+                        </div>
 
-                    <p>
-                        <strong>Findings:</strong>
-                        {{ issue.findings }}
-                    </p>
+                        <div class="footer-buttons">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="copySourceCode()"
+                                title="Copy editor contents">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                                Copy
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="clearCode()"
+                                title="Clear editor">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path
+                                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                    </path>
+                                </svg>
+                                Clear
+                            </button>
+                            <button type="submit" id="analyze-btn" class="btn btn-primary"
+                                title="Execute multi-layer analysis (Ctrl + Enter)">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                </svg>
+                                Analyze Code
+                                <span class="shortcut-hint">Ctrl+↵</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
 
-                    <p>
-                        <strong>Suggested Fix:</strong>
-                        {{ issue.explanation.suggestion }}
-                    </p>
+            <!-- RIGHT COLUMN: Analysis Dashboard -->
+            <div class="results-container">
 
+                {% if not result %}
+                <!-- Initial / Empty State -->
+                <div class="empty-state-card">
+                    <div class="empty-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </div>
+                    <h3>Paste your Python code to begin.</h3>
+                    <p>BugLens will run syntax validation, AST inspections, static code rules, safe runtime execution,
+                        and local AI explanation.</p>
+
+                    <div class="empty-features-grid">
+                        <div class="empty-feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>AST Node & Symbol Analysis</span>
+                        </div>
+                        <div class="empty-feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Zero Division & Name Errors</span>
+                        </div>
+                        <div class="empty-feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Mutable Defaults & Dead Code</span>
+                        </div>
+                        <div class="empty-feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Local Ollama AI Fix Generation</span>
+                        </div>
+                    </div>
+                </div>
+
+                {% else %}
+
+                <!-- 1. Overview & Code Health Card -->
+                <div class="overview-card">
+                    <div class="overview-header">
+                        <h2 class="overview-title">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                            </svg>
+                            Analysis Overview
+                        </h2>
+                        <span
+                            class="severity-badge {% if result.summary.health_score >= 90 %}badge-success{% elif result.summary.health_score >= 75 %}badge-low{% elif result.summary.health_score >= 50 %}badge-high{% else %}badge-critical{% endif %}">
+                            {{ result.summary.health_rating }}
+                        </span>
+                    </div>
+
+                    <!-- Health Score Bar -->
+                    <div class="score-badge-group">
+                        <div
+                            class="score-number-box {% if result.summary.health_score >= 90 %}score-excellent{% elif result.summary.health_score >= 75 %}score-good{% elif result.summary.health_score >= 50 %}score-fair{% else %}score-critical{% endif %}">
+                            <div class="score-number">{{ result.summary.health_score }}</div>
+                            <div class="score-max">/ 100 Health</div>
+                        </div>
+
+                        <div class="score-details">
+                            <div class="score-label-row">
+                                <span class="score-rating">Code Health Score</span>
+                                <span class="editor-meta">{{ result.summary.total_issues }} detected issue{{ 's' if
+                                    result.summary.total_issues != 1 else '' }}</span>
+                            </div>
+                            <div class="score-bar-bg">
+                                <div class="score-bar-fill {% if result.summary.health_score >= 90 %}score-excellent{% elif result.summary.health_score >= 75 %}score-good{% elif result.summary.health_score >= 50 %}score-fair{% else %}score-critical{% endif %}"
+                                    style="width: {{ result.summary.health_score }}%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Issue Summary Counts Grid -->
+                    <div class="issue-counts-grid">
+                        <div class="count-card count-critical">
+                            <span class="count-val">{{ result.summary.critical_issues }}</span>
+                            <span class="count-label">Critical</span>
+                        </div>
+                        <div class="count-card count-high">
+                            <span class="count-val">{{ result.summary.high_issues }}</span>
+                            <span class="count-label">High</span>
+                        </div>
+                        <div class="count-card count-medium">
+                            <span class="count-val">{{ result.summary.medium_issues }}</span>
+                            <span class="count-label">Medium</span>
+                        </div>
+                        <div class="count-card count-low">
+                            <span class="count-val">{{ result.summary.low_issues }}</span>
+                            <span class="count-label">Low</span>
+                        </div>
+                        <div class="count-card count-info">
+                            <span class="count-val">{{ result.summary.info_issues }}</span>
+                            <span class="count-label">Info</span>
+                        </div>
+                    </div>
+
+                    <!-- Status Summary Row -->
+                    <div class="status-indicators-row">
+                        <div class="status-pill">
+                            <strong>Syntax:</strong>
+                            {% if result.syntax.has_error %}
+                            <span class="count-critical">Syntax Error</span>
+                            {% else %}
+                            <span class="count-low">No Errors</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="status-pill">
+                            <strong>Runtime:</strong>
+                            {% if result.runtime and result.runtime.has_error %}
+                            <span class="count-critical">{{ result.runtime.error_type }}</span>
+                            {% elif result.runtime %}
+                            <span class="count-low">No Errors</span>
+                            {% else %}
+                            <span class="editor-meta">Skipped</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="status-pill">
+                            <strong>Local AI:</strong>
+                            {% if result.ai_analysis and result.ai_analysis.success %}
+                            <span style="color: var(--ai-purple); font-weight:600;">Completed</span>
+                            {% elif result.ai_analysis %}
+                            <span class="count-high">Unavailable</span>
+                            {% else %}
+                            <span class="editor-meta">Not Run</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Syntax Analysis Card -->
+                <div class="result-card">
+                    <div class="card-header-row">
+                        <h3>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="4 17 10 11 4 5"></polyline>
+                                <line x1="12" y1="19" x2="20" y2="19"></line>
+                            </svg>
+                            1. Syntax Analysis
+                        </h3>
+                        {% if result.syntax.has_error %}
+                        <span class="severity-badge badge-critical">Syntax Error</span>
+                        {% else %}
+                        <span class="severity-badge badge-success">Passed</span>
+                        {% endif %}
+                    </div>
+
+                    {% if result.syntax.has_error %}
+                    <div class="issue-item issue-item-critical">
+                        <div class="issue-message">{{ result.syntax.message }}</div>
+                        <p class="editor-meta" style="margin: 0.3rem 0;">Line: {{ result.syntax.line }} | Column: {{
+                            result.syntax.column }}</p>
+                    </div>
                     {% else %}
+                    <p class="editor-meta" style="color: var(--success); margin: 0; font-weight: 500;">
+                        No syntax errors found.
+                    </p>
+                    {% endif %}
+                </div>
 
-                    <p class="success">
-                        ✅ No issues detected.
+                <!-- 3. AST Analysis Card -->
+                <div class="result-card">
+                    <div class="card-header-row">
+                        <h3>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="18" cy="5" r="3"></circle>
+                                <circle cx="6" cy="12" r="3"></circle>
+                                <circle cx="18" cy="19" r="3"></circle>
+                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                            </svg>
+                            2. AST Analysis
+                        </h3>
+                        {% if result.ast.success %}
+                        <span class="severity-badge badge-success">Passed</span>
+                        {% else %}
+                        <span class="severity-badge badge-critical">Failed</span>
+                        {% endif %}
+                    </div>
+
+                    {% if result.ast.success %}
+                    <p class="editor-meta" style="color: var(--success); margin: 0 0 0.75rem; font-weight: 500;">
+                        AST analysis completed successfully.
                     </p>
 
+                    <div class="ast-metrics-grid">
+                        <div class="ast-stat-box">
+                            <div class="ast-stat-val">{{ result.ast.node_count }}</div>
+                            <div class="ast-stat-label">AST Nodes</div>
+                        </div>
+                        <div class="ast-stat-box">
+                            <div class="ast-stat-val">{{ result.ast.functions | length }}</div>
+                            <div class="ast-stat-label">Functions</div>
+                        </div>
+                        <div class="ast-stat-box">
+                            <div class="ast-stat-val">{{ result.ast.classes | length }}</div>
+                            <div class="ast-stat-label">Classes</div>
+                        </div>
+                        <div class="ast-stat-box">
+                            <div class="ast-stat-val">{{ result.ast.imports | length }}</div>
+                            <div class="ast-stat-label">Imports</div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="count-critical" style="margin: 0;">{{ result.ast.message }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- 4. Unified Issues List (Rule-Based Static & Runtime Findings) -->
+                {% if result.issues %}
+                <div class="result-card">
+                    <div class="card-header-row">
+                        <h3>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            3. Rule-Based Analysis ({{ result.issues | length }})
+                        </h3>
+                    </div>
+
+                    <div class="issues-stack">
+                        {% for issue in result.issues %}
+                        <div class="issue-item issue-item-{{ issue.severity | lower }}" id="{{ issue.id }}">
+                            <div class="issue-top">
+                                <div class="issue-tags">
+                                    <span class="severity-badge badge-{{ issue.severity | lower }}">{{ issue.severity
+                                        }}</span>
+                                    <span class="category-tag">{{ issue.category }}</span>
+                                    {% if issue.line %}
+                                    <span class="line-tag">Line {{ issue.line }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="issue-message">{{ issue.message }}</div>
+
+                            {% if issue.source_line %}
+                            <div class="code-snippet-box"><code>{{ issue.source_line }}</code></div>
+                            {% endif %}
+
+                            <div class="issue-details-grid">
+                                {% if issue.explanation and issue.explanation.description %}
+                                <div class="detail-block">
+                                    <strong>Explanation</strong>
+                                    <p>{{ issue.explanation.description }}</p>
+                                </div>
+                                {% endif %}
+
+                                {% if issue.suggested_fix %}
+                                <div class="detail-block">
+                                    <strong>Suggested Fix</strong>
+                                    <p>{{ issue.suggested_fix }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="result-card">
+                    <div class="card-header-row">
+                        <h3>3. Rule-Based Analysis</h3>
+                        <span class="severity-badge badge-success">Clean</span>
+                    </div>
+                    <p style="color: var(--success); margin: 0; font-weight: 500;">
+                        Great! No significant issues detected.
+                    </p>
+                </div>
+                {% endif %}
+
+                <!-- 5. Runtime Analysis Card -->
+                {% if result.runtime %}
+                <div class="result-card">
+                    <div class="card-header-row">
+                        <h3>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="4 17 10 11 4 5"></polyline>
+                                <line x1="12" y1="19" x2="20" y2="19"></line>
+                            </svg>
+                            4. Runtime Execution
+                        </h3>
+                        {% if result.runtime.has_error %}
+                        <span class="severity-badge badge-critical">{{ result.runtime.error_type }}</span>
+                        {% else %}
+                        <span class="severity-badge badge-success">Success</span>
+                        {% endif %}
+                    </div>
+
+                    {% if result.runtime.has_error %}
+                    <div class="issue-item issue-item-critical">
+                        <div class="issue-message">{{ result.runtime.error_type }}{% if result.runtime.exception_message
+                            %}: {{ result.runtime.exception_message }}{% endif %}</div>
+                        {% if result.runtime.line_number %}
+                        <p class="editor-meta">Failed at line {{ result.runtime.line_number }}</p>
+                        {% endif %}
+
+                        {% if result.runtime.source_line %}
+                        <div class="code-snippet-box"><code>{{ result.runtime.source_line }}</code></div>
+                        {% endif %}
+
+                        {% if result.runtime.explanation %}
+                        <div class="issue-details-grid">
+                            <div class="detail-block">
+                                <strong>Description</strong>
+                                <p>{{ result.runtime.explanation.description }}</p>
+                            </div>
+                            <div class="detail-block">
+                                <strong>Suggested Fix</strong>
+                                <p>{{ result.runtime.explanation.suggestion }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <details style="margin-top: 0.75rem;">
+                            <summary style="font-size: 0.8rem; color: var(--accent); cursor: pointer;">View Full
+                                Traceback</summary>
+                            <pre class="code-snippet-box"
+                                style="margin-top: 0.4rem; white-space: pre-wrap;">{{ result.runtime.message }}</pre>
+                        </details>
+                    </div>
+                    {% else %}
+                    <p class="editor-meta" style="color: var(--success); margin: 0; font-weight: 500;">
+                        Code executed successfully without runtime exceptions.
+                    </p>
                     {% endif %}
 
+                    {% if result.runtime.output %}
+                    <div class="console-output">
+                        <div class="console-header">
+                            <div class="terminal-dots">
+                                <span class="t-dot t-red"></span>
+                                <span class="t-dot t-yellow"></span>
+                                <span class="t-dot t-green"></span>
+                            </div>
+                            <span>Program Output (stdout)</span>
+                        </div>
+                        <pre style="margin: 0; font-family: inherit;">{{ result.runtime.output }}</pre>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- 6. AI Analysis Card (Local Ollama) -->
+                {% if result.ai_analysis and result.ai_analysis.success %}
+                <div class="result-card ai-card">
+                    <div class="card-header-row">
+                        <h3>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ai-purple)"
+                                stroke-width="2">
+                                <path d="M12 2a10 10 0 1 0 10 10H12V2z"></path>
+                                <path d="M12 2a10 10 0 0 1 10 10h-10V2z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            5. AI Analysis
+                        </h3>
+                        <span class="ai-badge">Ollama: {{ ollama_info.model if ollama_info else 'llama3.2' }}</span>
+                    </div>
+
+                    <div class="ai-section-box">
+                        <h4>🤖 AI Explanation</h4>
+                        <p>{{ result.ai_analysis.explanation }}</p>
+                    </div>
+
+                    {% if result.ai_analysis.why_it_happens %}
+                    <div class="ai-section-box">
+                        <h4>💡 Why It Happens</h4>
+                        <p>{{ result.ai_analysis.why_it_happens }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if result.ai_analysis.suggested_fix %}
+                    <div class="ai-section-box">
+                        <h4>🔧 Suggested Fix</h4>
+                        <p>{{ result.ai_analysis.suggested_fix }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if result.ai_analysis.corrected_code %}
+                    <div class="ai-section-box">
+                        <div class="code-block-header">
+                            <span style="font-weight: 600; color: var(--accent);">AI Suggested Fix</span>
+                            <button type="button" class="btn btn-secondary btn-sm copy-btn"
+                                data-target="ai-corrected-code" title="Copy corrected code">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                                Copy Code
+                            </button>
+                        </div>
+                        <pre
+                            class="code-block"><code id="ai-corrected-code">{{ result.ai_analysis.corrected_code }}</code></pre>
+                    </div>
+                    {% endif %}
+
+                    {% if result.ai_analysis.changes_made %}
+                    <div class="ai-section-box" style="margin-bottom: 0;">
+                        <h4>📝 Changes Made</h4>
+                        <ul class="changes-list">
+                            {% for change in result.ai_analysis.changes_made %}
+                            <li>{{ change }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
                 </div>
 
-                {% endfor %}
+                {% elif result.ai_analysis and not result.ai_analysis.success %}
+                <!-- AI Error / Offline Card -->
+                <div class="result-card">
+                    <div class="card-header-row">
+                        <h3>5. AI Analysis</h3>
+                        <span class="severity-badge badge-high">AI Offline</span>
+                    </div>
+                    <div class="issue-item issue-item-high">
+                        <div class="issue-message">AI analysis could not be completed.</div>
+                        <p class="editor-meta" style="color: var(--text-secondary); margin: 0.4rem 0;">
+                            {{ result.ai_analysis.error }}
+                        </p>
+                        <p class="editor-meta" style="margin: 0; color: var(--text-muted);">
+                            Deterministic static, AST, and runtime analysis remain 100% active. To enable AI, ensure
+                            Ollama is running locally with
+                            <code>ollama pull {{ ollama_info.model if ollama_info else 'llama3.2' }}</code>.
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% endif %}
 
             </div>
-
-
-            <!-- Runtime Analysis -->
-            <div class="result-card">
-
-                <h3>4. Runtime Analysis</h3>
-
-                {% if result.runtime.has_error %}
-
-                <p class="error">
-                    ❌ {{ result.runtime.error_type }}
-                </p>
-
-                {% if result.runtime.line_number %}
-                <p>
-                    <strong>Line:</strong>
-                    {{ result.runtime.line_number }}
-                </p>
-                {% endif %}
-
-                {% if result.runtime.source_line %}
-                <p>
-                    <strong>Source Line:</strong>
-                    <code>{{ result.runtime.source_line }}</code>
-                </p>
-                {% endif %}
-
-                {% if result.runtime.explanation %}
-
-                <div class="issue-section">
-
-                    <h4>
-                        {{ result.runtime.explanation.title }}
-                    </h4>
-
-                    <p>
-                        <strong>Description:</strong>
-                        {{ result.runtime.explanation.description }}
-                    </p>
-
-                    <p>
-                        <strong>Suggested Fix:</strong>
-                        {{ result.runtime.explanation.suggestion }}
-                    </p>
-
-                </div>
-
-                {% endif %}
-
-                <details>
-                    <summary>View Technical Error Details</summary>
-                    <pre>{{ result.runtime.message }}</pre>
-                </details>
-
-                {% else %}
-
-                <p class="success">
-                    ✅ Code executed successfully.
-                </p>
-
-                {% endif %}
-
-
-                {% if result.runtime.output %}
-
-                <h4>Program Output</h4>
-
-                <pre>{{ result.runtime.output }}</pre>
-
-                {% endif %}
-
-            </div>
-
-
-            <!-- AI Analysis -->
-            {% if result.ai_analysis and result.ai_analysis.success %}
-
-            <div class="result-card">
-
-                <h3>5. AI Analysis</h3>
-
-                <div class="issue-section">
-
-                    <h4>🤖 AI Explanation</h4>
-
-                    <p>
-                        {{ result.ai_analysis.explanation }}
-                    </p>
-
-                </div>
-
-
-                <div class="issue-section">
-
-                    <h4>Why It Happens</h4>
-
-                    <p>
-                        {{ result.ai_analysis.why_it_happens }}
-                    </p>
-
-                </div>
-
-
-                <div class="issue-section">
-
-                    <h4>Suggested Fix</h4>
-
-                    <p>
-                        {{ result.ai_analysis.suggested_fix }}
-                    </p>
-
-                </div>
-
-
-                <div class="issue-section">
-
-                    <h4>Corrected Code</h4>
-
-                    <pre><code>{{ result.ai_analysis.corrected_code }}</code></pre>
-
-                </div>
-
-
-                <div class="issue-section">
-
-                    <h4>Changes Made</h4>
-
-                    <ul>
-                        {% for change in result.ai_analysis.changes_made %}
-                        <li>{{ change }}</li>
-                        {% endfor %}
-                    </ul>
-
-                </div>
-
-            </div>
-
-            {% elif result.ai_analysis and not result.ai_analysis.success %}
-
-            <div class="result-card">
-
-                <h3>5. AI Analysis</h3>
-
-                <p class="error">
-                    ❌ AI analysis could not be completed.
-                </p>
-
-                <p>
-                    {{ result.ai_analysis.error }}
-                </p>
-
-            </div>
-
-            {% endif %}
-
         </div>
+    </main>
 
-        {% endif %}
+    <!-- Loading State Modal -->
+    <div id="loading-state" class="loading-overlay hidden" aria-live="polite">
+        <div class="spinner"></div>
+        <p class="loading-text">Analyzing your code...</p>
+        <span class="loading-subtext">Executing AST inspection, static bug rules, runtime sandbox, and local Ollama
+            AI</span>
+    </div>
 
+    <!-- How It Works Modal -->
+    <dialog id="modal-how" class="overview-card"
+        style="max-width: 600px; margin: auto; background: var(--bg-surface); border: 1px solid var(--border-default); color: var(--text-primary); border-radius: var(--radius-lg); padding: 1.75rem;">
+        <div class="card-header-row">
+            <h3>How BugLens Works</h3>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-how')">✕</button>
+        </div>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">
+            BugLens implements a multi-layer analysis pipeline:
+        </p>
+        <ol style="color: var(--text-secondary); font-size: 0.88rem; padding-left: 1.25rem; line-height: 1.8;">
+            <li><strong>Syntax Verification:</strong> Validates Python token grammar with AST parsing.</li>
+            <li><strong>AST Inspection:</strong> Maps classes, functions, scopes, and variable contexts.</li>
+            <li><strong>Static Rules:</strong> Evaluates 14+ static detectors for mutable defaults, dead code,
+                suspicious conditions, and security risks.</li>
+            <li><strong>Runtime Sandbox:</strong> Runs isolated code in a subprocess with resource and timeout limits.
+            </li>
+            <li><strong>Health Score:</strong> Weights detected issues to produce an objective 0-100 quality score.</li>
+            <li><strong>Local Ollama AI:</strong> Connects to your local <code>llama3.2</code> instance to generate root
+                cause explanations and corrected code.</li>
+        </ol>
+    </dialog>
 
+    <!-- Docs Modal -->
+    <dialog id="modal-docs" class="overview-card"
+        style="max-width: 600px; margin: auto; background: var(--bg-surface); border: 1px solid var(--border-default); color: var(--text-primary); border-radius: var(--radius-lg); padding: 1.75rem;">
+        <div class="card-header-row">
+            <h3>BugLens Quick Reference</h3>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-docs')">✕</button>
+        </div>
+        <div style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7;">
+            <p><strong>Keyboard Shortcuts:</strong></p>
+            <ul style="padding-left: 1.25rem;">
+                <li><code>Ctrl + Enter</code> or <code>Cmd + Enter</code>: Run analysis</li>
+                <li><code>Tab</code>: Insert 4 spaces in the code editor</li>
+            </ul>
+            <p><strong>Configuring Local Ollama:</strong></p>
+            <p>Run Ollama on port 11434 with model <code>llama3.2</code>:</p>
+            <pre class="code-snippet-box">ollama pull llama3.2
+ollama serve</pre>
+            <p>Environment overrides: <code>OLLAMA_MODEL</code> and <code>OLLAMA_URL</code>.</p>
+        </div>
+    </dialog>
+
+    <!-- About Modal -->
+    <dialog id="modal-about" class="overview-card"
+        style="max-width: 600px; margin: auto; background: var(--bg-surface); border: 1px solid var(--border-default); color: var(--text-primary); border-radius: var(--radius-lg); padding: 1.75rem;">
+        <div class="card-header-row">
+            <h3>About BugLens</h3>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-about')">✕</button>
+        </div>
+        <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.7;">
+            <strong>BugLens</strong> is an intelligent Python bug detection and explanation platform designed for
+            developers, students, and educators.
+        </p>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+            Stack: Python 3, Flask, Python AST, Subprocess Sandbox, Local Ollama HTTP API, HTML5/CSS3.
+        </p>
+    </dialog>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>BugLens &bull; Intelligent Python Bug Detection and Explanation Platform &bull; Powered by Python & Local
+            Ollama</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
     <script>
-
-        function clearCode() {
-
-            document.getElementById("code").value = "";
-
-            const results = document.querySelector(".result-section");
-
-            if (results) {
-                results.remove();
-            }
-
-            updateLineNumbers();
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            if (modal && modal.showModal) modal.showModal();
         }
-
-
-        function updateLineNumbers() {
-
-            const code = document.getElementById("code");
-            const lineNumbers = document.getElementById("line-numbers");
-
-            const lines = code.value.split("\n").length;
-
-            lineNumbers.innerHTML = "";
-
-            for (let i = 1; i <= lines; i++) {
-                lineNumbers.innerHTML += i + "<br>";
-            }
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if (modal && modal.close) modal.close();
         }
-
-
-        function syncLineNumbers() {
-
-            const code = document.getElementById("code");
-            const lineNumbers = document.getElementById("line-numbers");
-
-            lineNumbers.scrollTop = code.scrollTop;
-        }
-
-
-        function showLoading() {
-
-            const button = document.querySelector(".analyze-btn");
-
-            button.disabled = true;
-            button.textContent = "Analyzing...";
-        }
-
-
-        updateLineNumbers();
-
     </script>
-
-
 </body>
 
 </html>

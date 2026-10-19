@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Analysis History | BugLens</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <style>
+        .history-container {
+            margin-top: 30px;
+        }
+
+        .history-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 22px;
+            margin-bottom: 20px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .history-header h2 {
+            margin: 0 0 6px;
+        }
+
+        .history-date {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .history-score {
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .history-code {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+        }
+
+        .history-code pre {
+            margin: 0;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .history-footer {
+            margin-top: 16px;
+            color: #4b5563;
+        }
+
+        .history-empty {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .history-actions a {
+            text-decoration: none;
+        }
+
+        .filter-label {
+            display: inline-block;
+            padding: 6px 12px;
+            margin-top: 10px;
+            border-radius: 20px;
+            background: #f3e8ff;
+            color: #7c3aed;
+            font-size: 13px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="dashboard-container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <a href="/" class="brand">
+            <span class="brand-icon">B</span>
+            <span>BugLens</span>
+        </a>
+
+        <p class="menu-label">WORKSPACE</p>
+
+        <nav class="sidebar-nav">
+
+            <a href="/" class="nav-link">
+                <span>⌂</span> Home
+            </a>
+
+            <a href="/analyzer" class="nav-link">
+                <span>⌘</span> Code Analyzer
+            </a>
+
+            <a href="{{ url_for('analysis_history') }}"
+               class="nav-link active">
+                <span>◷</span> History
+            </a>
+
+        </nav>
+
+        <!-- User Information -->
+        <div class="sidebar-bottom">
+
+            <div class="user-avatar">
+                {{ session.get('user_name', 'User')[0]|upper }}
+            </div>
+
+            <div class="user-details">
+                <strong>{{ session.get('user_name', 'User') }}</strong>
+                <span>BugLens User</span>
+            </div>
+
+            <a href="/logout"
+               class="logout-icon"
+               title="Logout">
+                ↗
+            </a>
+
+        </div>
+
+    </aside>
+
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Page Header -->
+        <header class="topbar">
+
+            <div>
+                <p class="breadcrumb">Workspace / History</p>
+
+                <h1>
+                    {% if filter_type == 'bugs' %}
+                        Bug Detection History
+                    {% elif filter_type == 'health' %}
+                        Code Health History
+                    {% else %}
+                        Analysis History
+                    {% endif %}
+                </h1>
+            </div>
+
+            <a href="/analyzer" class="primary-button">
+                + New Analysis
+            </a>
+
+        </header>
+
+
+        <!-- History Results -->
+        <section class="history-container">
+
+            <div class="section-heading">
+                <div>
+
+                    {% if filter_type == 'bugs' %}
+
+                        <h2>Analyses With Detected Bugs</h2>
+
+                        <p>
+                            Review code analyses where one or more issues
+                            were detected.
+                        </p>
+
+                        <span class="filter-label">
+                            Bugs Detected
+                        </span>
+
+                    {% elif filter_type == 'health' %}
+
+                        <h2>Code Health Scores</h2>
+
+                        <p>
+                            Review your analyses, ordered from the
+                            lowest health score to the highest.
+                        </p>
+
+                        <span class="filter-label">
+                            Code Health
+                        </span>
+
+                    {% else %}
+
+                        <h2>Your Previous Analyses</h2>
+
+                        <p>
+                            Review all your submitted code and analysis
+                            results.
+                        </p>
+
+                        <span class="filter-label">
+                            Total Analyses
+                        </span>
+
+                    {% endif %}
+
+                </div>
+            </div>
+
+
+            {% if analyses %}
+
+                {% for analysis in analyses %}
+
+                    <article class="history-card">
+
+                        <!-- Analysis Header -->
+                        <div class="history-header">
+
+                            <div>
+
+                                <h2>
+                                    Analysis #{{ analysis["id"] }}
+                                </h2>
+
+                                <div class="history-date">
+                                    {{ analysis["created_at"] }}
+                                </div>
+
+                            </div>
+
+                            <div class="history-score">
+
+                                Health:
+
+                                {% if analysis["health_score"] is not none %}
+                                    {{ analysis["health_score"] }}/100
+                                {% else %}
+                                    N/A
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Submitted Code -->
+                        <div class="history-code">
+
+                            <pre><code>{{ analysis["submitted_code"] }}</code></pre>
+
+                        </div>
+
+
+                        <!-- Analysis Summary -->
+                        <div class="history-footer">
+
+                            <strong>
+                                Issues found:
+                                {{ analysis["bugs_found"] }}
+                            </strong>
+
+                        </div>
+
+                    </article>
+
+                {% endfor %}
+
+            {% else %}
+
+                <!-- Empty State -->
+                <div class="history-empty">
+
+                    {% if filter_type == 'bugs' %}
+
+                        <h2>No Bugs Detected</h2>
+
+                        <p>
+                            No saved analyses with detected issues
+                            were found.
+                        </p>
+
+                    {% elif filter_type == 'health' %}
+
+                        <h2>No Code Health Results</h2>
+
+                        <p>
+                            Run a code analysis to view your code
+                            health scores here.
+                        </p>
+
+                    {% else %}
+
+                        <h2>No Analysis History Yet</h2>
+
+                        <p>
+                            Your saved code analyses will appear here.
+                        </p>
+
+                    {% endif %}
+
+                    <a href="/analyzer" class="primary-button">
+                        Analyze Python Code
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+
+            <!-- Navigation Actions -->
+            <div class="history-actions">
+
+                <a href="{{ url_for('analysis_history', filter='all') }}"
+                   class="secondary-button">
+                    View All Analyses
+                </a>
+
+                <a href="{{ url_for('dashboard') }}"
+                   class="secondary-button">
+                    ← Back to Dashboard
+                </a>
+
+                <a href="/analyzer" class="primary-button">
+                    Analyze Python Code
+                </a>
+
+            </div>
+
+        </section>
+
+
+        <!-- Footer -->
+        <footer class="dashboard-footer">
+
+            <span>© 2026 BugLens</span>
+
+            <span>
+                Built for cleaner, better Python code.
+            </span>
+
+        </footer>
+
+    </main>
+
+</div>
+
+</body>
+</html>

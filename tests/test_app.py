@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from app import app
 
 
@@ -10,7 +11,16 @@ def test_home_page():
     assert b"BugLens" in response.data
 
 
-def test_code_analysis():
+@patch("analyzers.bug_analyzer.analyze_with_ai")
+def test_code_analysis(mock_ai):
+    mock_ai.return_value = {
+        "success": True,
+        "explanation": "Clean execution",
+        "why_it_happens": "",
+        "suggested_fix": "",
+        "corrected_code": "x = 10\nprint(x)",
+        "changes_made": [],
+    }
     client = app.test_client()
 
     code = """
