@@ -1,5 +1,6 @@
 import ast
 import builtins
+import re
 
 PYTHON_BUILTINS = {
     "list", "dict", "str", "int", "float", "bool", "set", "tuple",
@@ -385,3 +386,66 @@ def find_shadowed_builtins(code):
                     })
 
     return shadowed
+def find_out_of_range_list_indexes(code):
+    """
+    Detect out-of-range indexes into simple list literals.
+    Works even when another part of the code has a syntax error.
+    """
+    findings = []
+    lists = {}
+
+    # Detect simple list assignments, such as nums = [10, 20, 30, 40]
+    list_pattern = re.compile(
+        r"^\s*([A-Za-z_]\w*)\s*=\s*\[([^\[\]]*)\]",
+        re.MULTILINE,
+    )
+
+    for match in list_pattern.finditer(code):
+        name = match.group(1)
+        contents = match.group(2).strip()
+
+        try:
+            values = ast.literal_eval("[" + contents + "]")
+            lists[name] = len(values)
+        except (ValueError, SyntaxError):
+            continue
+
+    # Detect simple integer indexes, such as nums[5]
+    index_pattern = re.compile(
+        r"\b([A-Za-z_]\w*)\s*\[\s*(-?\d+)\s*\]"
+    )
+
+    for match in index_pattern.finditer(code):
+        name = match.group(1)
+        index = int(match.group(2))
+
+        if name not in lists:
+            continue
+
+        length = lists[name]
+
+        # Check positive and negative index boundaries.
+        if index >= length or index < -length:
+            line_number = code.count("\n", 0, match.start()) + 1
+
+            if length:
+                valid_indexes = f"0 to {length - 1}"
+                negative_indexes = f"-{length} to -1"
+            else:
+                valid_indexes = "none"
+                negative_indexes = "none"
+
+            findings.append({
+                "variable": name,
+                "index": index,
+                "length": length,
+                "line": line_number,
+                "message": (
+                    f"List '{name}' has {length} elements, but index "
+                    f"{index} is out of range. Valid indexes: "
+                    f"{valid_indexes}; negative indexes: "
+                    f"{negative_indexes}."
+                ),
+            })
+
+    return findings

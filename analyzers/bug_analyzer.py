@@ -1,8 +1,11 @@
+import ast
+import re
 from analyzers.ai_analyzer import analyze_with_ai
 from analyzers.ast_analyzer import analyze_ast
 from analyzers.explanation_engine import get_explanation
 from analyzers.runtime_analyzer import analyze_runtime
 from analyzers.static_analyzer import (
+    find_out_of_range_list_indexes,
     find_bare_except,
     find_broad_except,
     find_dangerous_eval,
@@ -67,7 +70,13 @@ def _extract_source_line(code, line_number):
     return None
 
 
+
+
+
+                
 def analyze_code(code, enable_ai=True):
+
+
     """
     Perform a complete multi-stage analysis of Python code:
     1. Syntax validation
@@ -77,6 +86,18 @@ def analyze_code(code, enable_ai=True):
     5. Issue aggregation, severity classification, and health scoring
     6. Local AI-powered explanation and fix suggestions via Ollama (if enabled)
     """
+    runtime_result = {
+        "has_error": False,
+        "error_type": None,
+        "issue_type": None,
+        "exception_message": "",
+        "message": "",
+        "output": "",
+        "line_number": None,
+        "source_line": None,
+        "explanation": None,
+    }
+
     result = {
         "syntax": analyze_syntax(code),
         "ast": analyze_ast(code),
@@ -100,40 +121,32 @@ def analyze_code(code, enable_ai=True):
         },
     }
 
-    # Handle syntax error: stop deeper execution
-    if result["syntax"]["has_error"]:
+    # Record syntax errors, but do not stop independent analysis.
+    has_syntax_error = result["syntax"]["has_error"]
+
+    if has_syntax_error:
         syntax_info = result["syntax"]
         explanation = get_explanation("syntax_error")
-        issue = {
+
+        result["issues"].append({
             "id": "issue-syntax-1",
             "category": "Syntax",
             "severity": "CRITICAL",
             "message": syntax_info.get("message", "Syntax error in code."),
             "line": syntax_info.get("line"),
             "column": syntax_info.get("column"),
-            "source_line": _extract_source_line(code, syntax_info.get("line")),
+            "source_line": _extract_source_line(
+                code, syntax_info.get("line")
+            ),
             "explanation": explanation,
             "suggested_fix": "Fix the syntax error at the indicated position.",
-        }
-        result["issues"].append(issue)
-        result["summary"]["total_issues"] = 1
-        result["summary"]["critical_issues"] = 1
-        result["summary"]["health_score"] = 0
-        result["summary"]["health_rating"] = "Critical"
+        })
+
         result["summary"]["syntax_status"] = "Error"
         result["summary"]["runtime_status"] = "Skipped"
 
-        # AI analysis can still provide fix for syntax error if requested
-        if enable_ai and code and code.strip():
-            result["ai_analysis"] = analyze_with_ai(
-                code,
-                [{"category": "Syntax", "severity": "CRITICAL", "message": syntax_info.get("message"), "line": syntax_info.get("line")}],
-            )
-            result["summary"]["ai_status"] = "Completed" if (result["ai_analysis"] and result["ai_analysis"].get("success")) else "Unavailable"
-        return result
-
-    result["summary"]["syntax_status"] = "Passed"
-
+    else:
+        result["summary"]["syntax_status"] = "Passed"
     # Static analysis detectors
     static_results = {
         "unused_variables": find_unused_variables(code),
@@ -145,6 +158,7 @@ def analyze_code(code, enable_ai=True):
         "dangerous_eval": find_dangerous_eval(code),
         "dangerous_exec": find_dangerous_exec(code),
         "division_by_zero": find_division_by_zero(code),
+        "out_of_range_indexes": find_out_of_range_list_indexes(code),
         "unreachable_code": find_unreachable_code(code),
         "none_comparison": find_none_comparison(code),
         "debug_prints": find_debug_prints(code),
@@ -167,6 +181,48 @@ def analyze_code(code, enable_ai=True):
 
     # Build unified structured issues list from static checks
     issue_counter = 1
+
+    # Out-of-range list indexes
+    for item in static_results["out_of_range_indexes"]:
+        variable = item["variable"]
+        index = item["index"]
+        length = item["length"]
+
+        if length > 0:
+            corrected_index = min(max(index, 0), length - 1)
+            suggested_fix = (
+                f"Replace {variable}[{index}] with "
+                f"{variable}[{corrected_index}]"
+            ) 
+        else:
+            suggested_fix = (
+                f"Check whether {variable} is empty before "
+                "accessing an element."
+            )
+
+        result["issues"].append({
+            "id": f"issue-{issue_counter}",
+            "category": "Indexing Error",
+            "severity": "HIGH",
+            "message": item["message"],
+            "line": item["line"],
+            "source_line": _extract_source_line(code, item["line"]),
+            "explanation": {
+                "description": (
+                    f"The list '{variable}' contains {length} elements, "
+                    f"so index {index} is outside its valid range."
+                ),
+                "suggestion": suggested_fix,
+            },
+            "suggested_fix": suggested_fix,
+        })
+
+        issue_counter += 1
+
+
+
+
+    
 
     # Unused variables
     for var in static_results["unused_variables"]:
@@ -392,41 +448,72 @@ def analyze_code(code, enable_ai=True):
         })
         issue_counter += 1
 
-    # Run safe runtime execution
-    runtime_result = analyze_runtime(code)
+    # Run runtime analysis only when syntax is valid.
+    if not has_syntax_error:
+        runtime_result = analyze_runtime(code)
 
-    if runtime_result["has_error"]:
-        runtime_result["explanation"] = get_explanation(
-            runtime_result["issue_type"]
-        )
-        runtime_exp = runtime_result["explanation"]
-        err_sev = "CRITICAL" if runtime_result["issue_type"] == "name_error" else runtime_exp.get("severity", "HIGH")
+        if runtime_result["has_error"]:
+            runtime_result["explanation"] = get_explanation(
+                runtime_result["issue_type"]
+            )
+            runtime_exp = runtime_result["explanation"]
 
-        # Format exception message accurately without 'None'
-        exc_msg = runtime_result.get("exception_message")
-        if exc_msg and exc_msg != runtime_result["error_type"]:
-            display_msg = f"{runtime_result['error_type']}: {exc_msg}"
+            err_sev = (
+                "CRITICAL"
+                if runtime_result["issue_type"] == "name_error"
+                else runtime_exp.get("severity", "HIGH")
+            )
+
+            exc_msg = runtime_result.get("exception_message")
+
+            if exc_msg and exc_msg != runtime_result["error_type"]:
+                display_msg = (
+                    f"{runtime_result['error_type']}: {exc_msg}"
+                )
+            else:
+                display_msg = runtime_result["error_type"]
+
+            runtime_issue = {
+                "id": f"issue-{issue_counter}",
+                "category": runtime_exp.get("category", "Runtime Error"),
+                "severity": err_sev,
+                "message": display_msg,
+                "line": runtime_result.get("line_number"),
+                "source_line": runtime_result.get("source_line"),
+                "explanation": runtime_exp,
+                "suggested_fix": runtime_exp.get(
+                    "suggestion",
+                    "Resolve the exception condition in the code.",
+                ),
+            }
+
+            result["issues"].append(runtime_issue)
+            result["summary"]["runtime_status"] = (
+                runtime_result["error_type"]
+            )
+
         else:
-            display_msg = runtime_result["error_type"]
+            runtime_result["explanation"] = None
+            result["summary"]["runtime_status"] = "Passed"
 
-        runtime_issue = {
-            "id": f"issue-{issue_counter}",
-            "category": runtime_exp.get("category", "Runtime Error"),
-            "severity": err_sev,
-            "message": display_msg,
-            "line": runtime_result.get("line_number"),
-            "source_line": runtime_result.get("source_line"),
-            "explanation": runtime_exp,
-            "suggested_fix": runtime_exp.get("suggestion", "Resolve the exception condition in the code."),
-        }
-        result["issues"].append(runtime_issue)
-        issue_counter += 1
-        result["summary"]["runtime_status"] = runtime_result["error_type"]
+        result["runtime"] = runtime_result
+
     else:
-        runtime_result["explanation"] = None
-        result["summary"]["runtime_status"] = "Passed"
-
-    result["runtime"] = runtime_result
+        result["runtime"] = {
+            "has_error": False,
+            "error_type": None,
+            "issue_type": None,
+            "exception_message": "",
+            "message": (
+                "Runtime analysis skipped because the code "
+                "contains a syntax error."
+            ),
+            "output": "",
+            "line_number": None,
+            "source_line": None,
+            "explanation": None,
+        }
+        result["summary"]["runtime_status"] = "Skipped"
 
     # Compute summary severity counts
     critical_c = sum(1 for i in result["issues"] if i.get("severity") == "CRITICAL")
@@ -435,7 +522,9 @@ def analyze_code(code, enable_ai=True):
     low_c = sum(1 for i in result["issues"] if i.get("severity") == "LOW")
     info_c = sum(1 for i in result["issues"] if i.get("severity") == "INFO")
 
-    health_score, health_rating = _calculate_health_score(result["issues"], False)
+    health_score, health_rating = _calculate_health_score(
+    result["issues"], has_syntax_error
+    )
 
     result["summary"]["total_issues"] = len(result["issues"])
     result["summary"]["critical_issues"] = critical_c
@@ -449,27 +538,41 @@ def analyze_code(code, enable_ai=True):
     # Prepare detected issues for AI analysis
     detected_issues = {}
 
+    # Include syntax errors in the AI input.
+    if has_syntax_error:
+        detected_issues["syntax_error"] = {
+            "message": result["syntax"].get("message"),
+            "line": result["syntax"].get("line"),
+            "column": result["syntax"].get("column"),
+        }
+
     for issue_type, issue_data in result["static"].items():
         if issue_data["findings"]:
             detected_issues[issue_type] = issue_data["findings"]
 
-    if runtime_result["has_error"]:
+    if not has_syntax_error and runtime_result.get("has_error", False):
         detected_issues["runtime_error"] = {
-            "error_type": runtime_result["error_type"],
+            "error_type": runtime_result.get("error_type"),
             "exception_message": runtime_result.get("exception_message", ""),
-            "line_number": runtime_result["line_number"],
-            "source_line": runtime_result["source_line"],
+            "line_number": runtime_result.get("line_number"),
+            "source_line": runtime_result.get("source_line"),
         }
+
 
     # Trigger AI analysis if enabled and issues exist
     if enable_ai and detected_issues:
         result["ai_analysis"] = analyze_with_ai(code, detected_issues)
-        if result["ai_analysis"] and result["ai_analysis"].get("success"):
+        if (
+            result["ai_analysis"]
+            and result["ai_analysis"].get("success")
+        ):
             result["summary"]["ai_status"] = "Completed"
         else:
             result["summary"]["ai_status"] = "Unavailable"
+
     elif not enable_ai:
         result["summary"]["ai_status"] = "Disabled"
+
     else:
         result["summary"]["ai_status"] = "No Issues"
 

@@ -241,16 +241,23 @@
                             {% endif %}
                         </div>
 
-                        <div class="status-pill">
-                            <strong>Runtime:</strong>
-                            {% if result.runtime and result.runtime.has_error %}
-                            <span class="count-critical">{{ result.runtime.error_type }}</span>
-                            {% elif result.runtime %}
-                            <span class="count-low">No Errors</span>
-                            {% else %}
-                            <span class="editor-meta">Skipped</span>
-                            {% endif %}
-                        </div>
+<div class="status-pill">
+    <strong>Runtime:</strong>
+
+    {% if result.summary.runtime_status == "Skipped" %}
+        <span class="editor-meta">Skipped</span>
+    {% elif result.runtime and result.runtime.has_error %}
+        <span class="count-critical">
+            {{ result.runtime.error_type }}
+        </span>
+    {% elif result.runtime %}
+        <span class="count-low">No Errors</span>
+    {% else %}
+        <span class="editor-meta">Skipped</span>
+    {% endif %}
+</div>
+
+
 
                         <div class="status-pill">
                             <strong>Local AI:</strong>
@@ -411,78 +418,110 @@
                 </div>
                 {% endif %}
 
-                <!-- 5. Runtime Analysis Card -->
-                {% if result.runtime %}
-                <div class="result-card">
-                    <div class="card-header-row">
-                        <h3>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <polyline points="4 17 10 11 4 5"></polyline>
-                                <line x1="12" y1="19" x2="20" y2="19"></line>
-                            </svg>
-                            4. Runtime Execution
-                        </h3>
-                        {% if result.runtime.has_error %}
-                        <span class="severity-badge badge-critical">{{ result.runtime.error_type }}</span>
-                        {% else %}
-                        <span class="severity-badge badge-success">Success</span>
-                        {% endif %}
-                    </div>
+            <!-- 5. Runtime Analysis Card -->
+            {% if result.runtime %}
+            <div class="result-card">
+                <div class="card-header-row">
+                    <h3>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <polyline points="4 17 10 11 4 5"></polyline>
+                            <line x1="12" y1="19" x2="20" y2="19"></line>
+                        </svg>
+                        4. Runtime Execution
+                    </h3>
 
-                    {% if result.runtime.has_error %}
-                    <div class="issue-item issue-item-critical">
-                        <div class="issue-message">{{ result.runtime.error_type }}{% if result.runtime.exception_message
-                            %}: {{ result.runtime.exception_message }}{% endif %}</div>
-                        {% if result.runtime.line_number %}
-                        <p class="editor-meta">Failed at line {{ result.runtime.line_number }}</p>
-                        {% endif %}
-
-                        {% if result.runtime.source_line %}
-                        <div class="code-snippet-box"><code>{{ result.runtime.source_line }}</code></div>
-                        {% endif %}
-
-                        {% if result.runtime.explanation %}
-                        <div class="issue-details-grid">
-                            <div class="detail-block">
-                                <strong>Description</strong>
-                                <p>{{ result.runtime.explanation.description }}</p>
-                            </div>
-                            <div class="detail-block">
-                                <strong>Suggested Fix</strong>
-                                <p>{{ result.runtime.explanation.suggestion }}</p>
-                            </div>
-                        </div>
-                        {% endif %}
-
-                        <details style="margin-top: 0.75rem;">
-                            <summary style="font-size: 0.8rem; color: var(--accent); cursor: pointer;">View Full
-                                Traceback</summary>
-                            <pre class="code-snippet-box"
-                                style="margin-top: 0.4rem; white-space: pre-wrap;">{{ result.runtime.message }}</pre>
-                        </details>
-                    </div>
+                    {% if result.summary.runtime_status == "Skipped" %}
+                    <span class="severity-badge badge-high">Skipped</span>
+                    {% elif result.runtime.has_error %}
+                    <span class="severity-badge badge-critical">
+                        {{ result.runtime.error_type }}
+                    </span>
                     {% else %}
-                    <p class="editor-meta" style="color: var(--success); margin: 0; font-weight: 500;">
-                        Code executed successfully without runtime exceptions.
+                    <span class="severity-badge badge-success">Success</span>
+                    {% endif %}
+                </div>
+
+                {% if result.summary.runtime_status == "Skipped" %}
+
+                <p class="editor-meta"
+                    style="margin: 0; font-weight: 500;">
+                    Runtime analysis skipped because the code contains a syntax error.
+                    Fix the syntax error before checking runtime behavior.
+                </p>
+
+                {% elif result.runtime.has_error %}
+
+                <div class="issue-item issue-item-critical">
+                    <div class="issue-message">
+                        {{ result.runtime.error_type }}
+                        {% if result.runtime.exception_message %}
+                        : {{ result.runtime.exception_message }}
+                        {% endif %}
+                    </div>
+
+                    {% if result.runtime.line_number %}
+                    <p class="editor-meta">
+                        Failed at line {{ result.runtime.line_number }}
                     </p>
                     {% endif %}
 
-                    {% if result.runtime.output %}
-                    <div class="console-output">
-                        <div class="console-header">
-                            <div class="terminal-dots">
-                                <span class="t-dot t-red"></span>
-                                <span class="t-dot t-yellow"></span>
-                                <span class="t-dot t-green"></span>
-                            </div>
-                            <span>Program Output (stdout)</span>
-                        </div>
-                        <pre style="margin: 0; font-family: inherit;">{{ result.runtime.output }}</pre>
+                    {% if result.runtime.source_line %}
+                    <div class="code-snippet-box">
+                        <code>{{ result.runtime.source_line }}</code>
                     </div>
                     {% endif %}
+
+                    {% if result.runtime.explanation %}
+                    <div class="issue-details-grid">
+                        <div class="detail-block">
+                            <strong>Description</strong>
+                            <p>{{ result.runtime.explanation.description }}</p>
+                        </div>
+
+                        <div class="detail-block">
+                            <strong>Suggested Fix</strong>
+                            <p>{{ result.runtime.explanation.suggestion }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <details style="margin-top: 0.75rem;">
+                        <summary
+                            style="font-size: 0.8rem; color: var(--accent); cursor: pointer;">
+                            View Full Traceback
+                        </summary>
+                        <pre class="code-snippet-box"
+                            style="margin-top: 0.4rem; white-space: pre-wrap;">{{ result.runtime.message }}</pre>
+                    </details>
+                </div>
+
+                {% else %}
+
+                <p class="editor-meta"
+                    style="color: var(--success); margin: 0; font-weight: 500;">
+                    Code executed successfully without runtime exceptions.
+                </p>
+
+                {% endif %}
+
+                {% if result.runtime.output and result.summary.runtime_status != "Skipped" %}
+                <div class="console-output">
+                    <div class="console-header">
+                        <div class="terminal-dots">
+                            <span class="t-dot t-red"></span>
+                            <span class="t-dot t-yellow"></span>
+                            <span class="t-dot t-green"></span>
+                        </div>
+                        <span>Program Output (stdout)</span>
+                    </div>
+
+                    <pre style="margin: 0; font-family: inherit;">{{ result.runtime.output }}</pre>
                 </div>
                 {% endif %}
+            </div>
+            {% endif %}
+
 
                 <!-- 6. AI Analysis Card (Local Ollama) -->
                 {% if result.ai_analysis and result.ai_analysis.success %}
